@@ -1,0 +1,61 @@
+name: Migrate HOANGGIA STUDIO source safely
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/migrate-home.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout destination
+        uses: actions/checkout@v4
+        with:
+          path: destination
+          persist-credentials: true
+      - name: Checkout original source
+        uses: actions/checkout@v4
+        with:
+          repository: hoanggiaktsda-beep/hoanggia-studio
+          ref: main
+          path: original
+          persist-credentials: false
+      - name: Copy entire original including binary media and tests
+        run: |
+          rsync -a --delete --exclude='/.git/' original/ destination/
+          python3 - <<'PY'
+          from pathlib import Path
+          app = Path("destination/src/app.js")
+          app.write_text(app.read_text().replace(
+            "https://github.com/hoanggiaktsda-beep/hoanggia-studio\"",
+            "https://github.com/hoanggiaktsda-beep/hoanggia-studio-ai\""), encoding="utf-8")
+          worker = Path("destination/sw.js")
+          worker.write_text(worker.read_text().replace(
+            "hoanggia-studio-v4.4.0", "hg-new-portal-v4.4.1").replace(
+            'k.startsWith("hoanggia-studio-")', 'k.startsWith("hg-new-portal-")'), encoding="utf-8")
+          Path("destination/.github/workflows/migrate-home.yml").unlink(missing_ok=True)
+          PY
+          diff -qr original/assets destination/assets
+          test -s destination/index.html
+          test -s destination/assets/secretary-avatar.jpg.png
+      - name: Test before committing
+        run: |
+          cd destination
+          node --test tests/*.test.mjs
+          for f in src/app.js src/core.js src/design-brain.js src/intelligence-core.js src/mo-chat.js sw.js design-ai/app.mjs design-ai/core.mjs design-ai/design-catalog.mjs design-ai/image-advisor.mjs; do node --check "$f"; done
+      - name: Commit complete migration
+        run: |
+          cd destination
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Destination already matches source"
+          else
+            git commit -m "Migrate complete HOANGGIA STUDIO site and tests"
+            git push origin HEAD:main
+          fi
