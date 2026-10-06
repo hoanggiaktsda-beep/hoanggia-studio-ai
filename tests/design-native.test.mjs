@@ -6,7 +6,7 @@ test("Design AI is native and does not use iframe",()=>{
  const app=read("src/app.js");
  assert.match(app,/location\.assign\(EXTERNAL_TOOLS\[id\]\)/);
  assert.match(app,/const EXTERNAL_TOOLS=/);
- assert.match(read("design-ai/index.html"),/src="\.\/app\.mjs"/);
+ assert.match(read("design-ai/index.html"),/location\.replace\("https:\/\/hoanggiaktsda-beep\.github\.io\/da-studio\/"\)/);
  assert.doesNotMatch(read("design-ai/index.html"),/<iframe\b/i);
 });
 test("DA creator is limited to create and shares active project",()=>{
