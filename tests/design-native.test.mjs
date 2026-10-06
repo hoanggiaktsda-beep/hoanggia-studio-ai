@@ -4,7 +4,7 @@ import {readFileSync} from "node:fs";
 const read=p=>readFileSync(new URL("../"+p,import.meta.url),"utf8");
 test("Design AI is native and does not use iframe",()=>{
  const app=read("src/app.js");
- assert.match(app,/location\.assign\("https:\/\/hoanggiaktsda-beep\.github\.io\/da-studio\/"\)/);
+ assert.match(app,/location\.assign\(EXTERNAL_TOOLS\[id\]\)/);
  assert.match(app,/href="https:\/\/hoanggiaktsda-beep\.github\.io\/da-studio\/"/);
  assert.match(read("design-ai/index.html"),/src="\.\/app\.mjs"/);
  assert.doesNotMatch(read("design-ai/index.html"),/<iframe\b/i);
@@ -15,7 +15,7 @@ test("DA creator is limited to create and shares active project",()=>{
  assert.match(app,/function restoreHostDesign\(/);
  assert.match(app,/v="create";state\.mode=v/);
  assert.match(app,/import \{designReview\}/);
- assert.match(app,/HOST_ACTIVE="hg-studio-active-v1"/);
+ assert.match(app,/HOST_ACTIVE="hg-studio-ai-active-v1"/);
 });
 test("native modules included in PWA",()=>{
  const sw=read("sw.js");
